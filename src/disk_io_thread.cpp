@@ -815,7 +815,9 @@ namespace libtorrent
 		if (flags & (flush_read_cache | flush_delete_cache))
 		{
 			fail_jobs_impl(storage_error(boost::asio::error::operation_aborted), pe->jobs, completed_jobs);
-			m_disk_cache.mark_for_deletion(pe);
+			// we're removing the torrent, don't keep any entries around in the
+			// ghost list
+			m_disk_cache.mark_for_deletion(pe, false);
 		}
 	}
 
@@ -2056,7 +2058,7 @@ namespace libtorrent
 			, end(cache.end()); i != end; )
 		{
 			jobqueue_t temp;
-			if (m_disk_cache.evict_piece(*(i++), temp))
+			if (m_disk_cache.evict_piece(*(i++), temp, false))
 				jobs.append(temp);
 		}
 		fail_jobs(storage_error(boost::asio::error::operation_aborted), jobs);

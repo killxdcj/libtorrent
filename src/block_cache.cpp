@@ -872,7 +872,8 @@ void block_cache::free_block(cached_piece_entry* pe, int block)
 	b.buf = NULL;
 }
 
-bool block_cache::evict_piece(cached_piece_entry* pe, tailqueue<disk_io_job>& jobs)
+bool block_cache::evict_piece(cached_piece_entry* pe, tailqueue<disk_io_job>& jobs
+	, bool allow_ghost)
 {
 	INVARIANT_CHECK;
 
@@ -922,11 +923,13 @@ bool block_cache::evict_piece(cached_piece_entry* pe, tailqueue<disk_io_job>& jo
 		jobs.append(pe->jobs);
 		TORRENT_ASSERT(pe->jobs.size() == 0);
 
-		if (pe->cache_state == cached_piece_entry::read_lru1_ghost
-			|| pe->cache_state == cached_piece_entry::read_lru2_ghost)
+		if (allow_ghost
+			&& (pe->cache_state == cached_piece_entry::read_lru1_ghost
+			|| pe->cache_state == cached_piece_entry::read_lru2_ghost))
 			return true;
 
-		if (pe->cache_state == cached_piece_entry::write_lru
+		if (!allow_ghost
+			|| pe->cache_state == cached_piece_entry::write_lru
 			|| pe->cache_state == cached_piece_entry::volatile_read_lru)
 			erase_piece(pe);
 		else
@@ -937,7 +940,7 @@ bool block_cache::evict_piece(cached_piece_entry* pe, tailqueue<disk_io_job>& jo
 	return false;
 }
 
-void block_cache::mark_for_deletion(cached_piece_entry* p)
+void block_cache::mark_for_deletion(cached_piece_entry* p, bool allow_ghost)
 {
 	INVARIANT_CHECK;
 
@@ -946,7 +949,7 @@ void block_cache::mark_for_deletion(cached_piece_entry* p)
 
 	TORRENT_PIECE_ASSERT(p->jobs.empty(), p);
 	tailqueue<disk_io_job> jobs;
-	if (!evict_piece(p, jobs))
+	if (!evict_piece(p, jobs, allow_ghost))
 	{
 		p->marked_for_deletion = true;
 	}

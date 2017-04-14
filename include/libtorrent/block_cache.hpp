@@ -370,12 +370,13 @@ namespace libtorrent
 		// mark this piece for deletion. If there are no outstanding
 		// requests to this piece, it's removed immediately, and the
 		// passed in iterator will be invalidated
-		void mark_for_deletion(cached_piece_entry* p);
+		void mark_for_deletion(cached_piece_entry* p, bool allow_ghost = true);
 
 		// similar to mark_for_deletion, except for actually marking the
 		// piece for deletion. If the piece was actually deleted,
 		// the function returns true
-		bool evict_piece(cached_piece_entry* p, tailqueue<disk_io_job>& jobs);
+		bool evict_piece(cached_piece_entry* p, tailqueue<disk_io_job>& jobs
+			, bool allow_ghost = true);
 
 		// if this piece is in L1 or L2 proper, move it to
 		// its respective ghost list
